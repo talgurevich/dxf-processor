@@ -39,3 +39,22 @@ async def upload_dxf(request: Request, file: UploadFile = File(...)):
         "csv_url": f"/{csv_path}",
         "image_url": f"/{img_path}"
     })
+
+import time
+import glob
+
+FILE_TTL_SECONDS = 30 * 60  # 30 minutes
+
+@app.get("/cleanup")
+def cleanup_files():
+    now = time.time()
+    deleted = []
+
+    for folder in ["uploads", "static"]:
+        for path in glob.glob(f"{folder}/*"):
+            if os.path.isfile(path) and now - os.path.getmtime(path) > FILE_TTL_SECONDS:
+                os.remove(path)
+                deleted.append(path)
+
+    return {"deleted": deleted}
+
