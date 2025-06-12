@@ -9,16 +9,12 @@ import time
 import glob
 from .dxf_utils import process_dxf_for_loops, visualize_loops
 
-# === App setup ===
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# === Config ===
 FILE_TTL_SECONDS = 30 * 60  # 30 minutes
 
-
-# === Metrics helper ===
 def update_metrics(process_time, area_sum, perimeter_sum):
     os.makedirs("app/data", exist_ok=True)
     path = "app/data/metrics.json"
@@ -42,8 +38,6 @@ def update_metrics(process_time, area_sum, perimeter_sum):
     with open(path, "w") as f:
         json.dump(metrics, f)
 
-
-# === SVG conversion ===
 def convert_to_svg(dxf_path, svg_output):
     from ezdxf import readfile
     from ezdxf.addons.drawing import RenderContext, Frontend
@@ -62,12 +56,9 @@ def convert_to_svg(dxf_path, svg_output):
     fig.savefig(svg_output, format="svg", bbox_inches="tight")
     plt.close(fig)
 
-
-# === Routes ===
 @app.get("/", response_class=HTMLResponse)
 def upload_page(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
-
 
 @app.post("/upload/")
 async def upload_dxf(request: Request, file: UploadFile = File(...)):
@@ -100,9 +91,9 @@ async def upload_dxf(request: Request, file: UploadFile = File(...)):
         "request": request,
         "csv_url": f"/{csv_path}",
         "image_url": f"/{img_path}",
-        "svg_url": f"/{svg_path}"
+        "svg_url": f"/{svg_path}",
+        "csv_table": df.to_html(classes="table", index=False, border=1)
     })
-
 
 @app.get("/metrics")
 def get_metrics():
@@ -111,7 +102,6 @@ def get_metrics():
         with open(path) as f:
             return json.load(f)
     return {"uploads": 0}
-
 
 @app.get("/cleanup")
 def cleanup_files():

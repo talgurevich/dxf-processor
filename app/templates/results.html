@@ -2,6 +2,21 @@
 <html>
 <head>
   <title>DXF Results</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+  </style>
 </head>
 <body>
   <h1>DXF File Processed</h1>
@@ -14,6 +29,11 @@
 
   <h2>Live SVG View</h2>
   <iframe src="{{ svg_url }}" width="100%" height="500px" style="border: 1px solid #ccc;"></iframe>
+
+  <h2>CSV Data Table</h2>
+  <div style="overflow-x: auto;">
+    {{ csv_table | safe }}
+  </div>
 
   <br><br>
   <a href="/">⬅ Back to Upload</a>
