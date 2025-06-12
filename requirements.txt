@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+ezdxf
+matplotlib
+python-multipart
+jinja2
