@@ -1,14 +1,17 @@
-{% extends "base.html" %}
-
-{% block title %}העלאת קובץ DXF{% endblock %}
-
-{% block content %}
-<h2>העלה קובץ DXF ונתח אותו</h2>
-<p>המערכת תזהה לולאות סגורות בקובץ שלך, תחשב שטחים והיקפים, ותציג תצוגה מקדימה.</p>
-
-<form action="/upload" method="post" enctype="multipart/form-data">
-  <label for="file">בחר קובץ DXF:</label><br><br>
-  <input type="file" name="file" accept=".dxf" required><br><br>
-  <button type="submit">🔍 העלאה וניתוח</button>
-</form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload DXF</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload DXF File</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".dxf" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+</body>
+</html>
