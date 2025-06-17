@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}מעבד DXF{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1><a href="/">🔧 מעבד קבצי DXF</a></h1>
+    <nav>
+      <a href="/">בית</a>
+      <a href="/about">אודות</a>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>© {{ now.year }} כל הזכויות שמורות</p>
+  </footer>
+</body>
+</html>

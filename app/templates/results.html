@@ -1,41 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>DXF Results</title>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #eee;
-    }
-  </style>
-</head>
-<body>
-  <h1>DXF File Processed</h1>
+{% extends "base.html" %}
 
-  <p><a href="{{ csv_url }}" target="_blank">📄 Download CSV</a></p>
-  <p><a href="{{ svg_url }}" target="_blank">🔍 View SVG in New Tab</a></p>
+{% block title %}תוצאות ניתוח הקובץ{% endblock %}
 
-  <h2>Preview Image</h2>
-  <img src="{{ image_url }}" alt="Preview" style="max-width: 100%; height: auto;" />
+{% block content %}
+<h2>🎉 הקובץ נותח בהצלחה</h2>
 
-  <h2>Live SVG View</h2>
-  <iframe src="{{ svg_url }}" width="100%" height="500px" style="border: 1px solid #ccc;"></iframe>
+<p>
+  📥 <a href="{{ csv_url }}" target="_blank">הורד קובץ CSV</a><br>
+  🖼 <a href="{{ svg_url }}" target="_blank">פתח תצוגת SVG בחלון חדש</a>
+</p>
 
-  <h2>CSV Data Table</h2>
-  <div style="overflow-x: auto;">
-    {{ csv_table | safe }}
-  </div>
+<h3>תצוגה מקדימה (PNG)</h3>
+<img src="{{ image_url }}" alt="תצוגת קובץ" style="max-width: 100%; border: 1px solid #ccc;" />
 
-  <br><br>
-  <a href="/">⬅ Back to Upload</a>
-</body>
-</html>
+<h3>תצוגת SVG חיה</h3>
+<iframe src="{{ svg_url }}" width="100%" height="500px" style="border: 1px solid #aaa;"></iframe>
+
+{% if table_data %}
+<h3>תוצאות בטבלה</h3>
+<table>
+  <thead>
+    <tr>
+      {% for header in table_data[0].keys() %}
+        <th>{{ header }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in table_data %}
+      <tr>
+        {% for value in row.values() %}
+          <td>{{ value }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>⚠️ לא נמצאו לולאות סגורות או שגיאה בקריאת הנתונים.</p>
+{% endif %}
+
+<br>
+<a href="/" class="button">⬅ חזרה לדף הבית</a>
+{% endblock %}
