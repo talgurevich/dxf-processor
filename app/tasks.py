@@ -4,7 +4,7 @@ import time
 import shutil
 from celery import Celery
 from .dxf_utils import process_dxf_for_loops, visualize_loops
-from .main import update_metrics, convert_to_svg
+from .utils import update_metrics, convert_to_svg  # ✅ new
 
 UPLOAD_DIR = "uploads"
 STATIC_DIR = "static"

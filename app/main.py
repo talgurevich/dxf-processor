@@ -10,6 +10,7 @@ import time
 import glob
 from .dxf_utils import process_dxf_for_loops, visualize_loops
 from .tasks import process_dxf_task
+from .utils import update_metrics, convert_to_svg  
 from celery.result import AsyncResult
 from urllib.parse import urlencode
 
