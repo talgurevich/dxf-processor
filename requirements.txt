@@ -1,7 +1,9 @@
 fastapi
 uvicorn
+celery
+redis
 pandas
 ezdxf
 matplotlib
-python-multipart
 jinja2
+python-multipart
