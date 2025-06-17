@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="upload-box">
+  <h2>🚀 הקובץ שלך בתהליך עיבוד</h2>
+  <p>אנחנו מפענחים את הקובץ ומפיקים את התוצאה. זה עלול לקחת מספר שניות...</p>
+  <p>העמוד יתעדכן אוטומטית כשהעיבוד יסתיים.</p>
+</div>
+
+<script>
+  const taskId = "{{ task_id }}";
+  async function checkStatus() {
+    const res = await fetch(`/status/${taskId}`);
+    const data = await res.json();
+    if (data.status === "SUCCESS") {
+      // Redirect to results with payload in query string
+      const params = new URLSearchParams(data.result).toString();
+      window.location.href = `/results?${params}`;
+    } else if (data.status === "FAILURE") {
+      document.body.innerHTML = "<h2>❌ שגיאה בעיבוד הקובץ</h2><p>נסה שוב.</p>";
+    } else {
+      setTimeout(checkStatus, 1500);
+    }
+  }
+
+  setTimeout(checkStatus, 1500);
+</script>
+{% endblock %}

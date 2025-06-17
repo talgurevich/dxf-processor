@@ -2,59 +2,22 @@ from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 import os
 import pandas as pd
 import json
 import time
 import glob
 from .dxf_utils import process_dxf_for_loops, visualize_loops
+from .tasks import process_dxf_task
+from celery.result import AsyncResult
+from urllib.parse import urlencode
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 FILE_TTL_SECONDS = 30 * 60  # 30 minutes
-
-def update_metrics(process_time, area_sum, perimeter_sum):
-    os.makedirs("app/data", exist_ok=True)
-    path = "app/data/metrics.json"
-    if not os.path.exists(path):
-        with open(path, "w") as f:
-            json.dump({
-                "uploads": 0,
-                "total_time": 0.0,
-                "total_area": 0.0,
-                "total_perimeter": 0.0
-            }, f)
-
-    with open(path, "r") as f:
-        metrics = json.load(f)
-
-    metrics["uploads"] += 1
-    metrics["total_time"] += process_time
-    metrics["total_area"] += area_sum
-    metrics["total_perimeter"] += perimeter_sum
-
-    with open(path, "w") as f:
-        json.dump(metrics, f)
-
-def convert_to_svg(dxf_path, svg_output):
-    from ezdxf import readfile
-    from ezdxf.addons.drawing import RenderContext, Frontend
-    from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
-    import matplotlib.pyplot as plt
-
-    doc = readfile(dxf_path)
-    msp = doc.modelspace()
-    fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
-    ctx = RenderContext(doc)
-    out = MatplotlibBackend(ax)
-    Frontend(ctx, out).draw_layout(msp)
-    ax.set_aspect('equal')
-    ax.axis("off")
-    fig.savefig(svg_output, format="svg", bbox_inches="tight")
-    plt.close(fig)
 
 @app.get("/", response_class=HTMLResponse)
 def upload_page(request: Request):
@@ -63,35 +26,47 @@ def upload_page(request: Request):
 @app.post("/upload/")
 async def upload_dxf(request: Request, file: UploadFile = File(...)):
     contents = await file.read()
-
     os.makedirs("uploads", exist_ok=True)
+
     path = f"uploads/{file.filename}"
     with open(path, "wb") as f:
         f.write(contents)
 
-    base = os.path.splitext(os.path.basename(path))[0]
-    csv_path = f"static/{base}.csv"
-    img_path = f"static/{base}.png"
-    svg_path = f"static/{base}.svg"
+    task = process_dxf_task.delay(path)
 
-    start_time = time.time()
+    return templates.TemplateResponse("processing.html", {
+        "request": request,
+        "task_id": task.id
+    })
 
-    parts = process_dxf_for_loops(path)
-    df = pd.DataFrame(parts)
-    df.to_csv(csv_path, index=False)
-    visualize_loops([p["Points"] for p in parts], save_path=img_path)
-    convert_to_svg(path, svg_path)
+@app.get("/status/{task_id}")
+def check_status(task_id: str):
+    task = AsyncResult(task_id)
+    if task.state == "PENDING":
+        return {"status": "PENDING"}
+    elif task.state == "FAILURE":
+        return {"status": "FAILURE"}
+    elif task.state == "SUCCESS":
+        return {
+            "status": "SUCCESS",
+            "result": task.result  # Expecting dict with 'csv_url', 'image_url', 'svg_url'
+        }
+    else:
+        return {"status": task.state}
 
-    process_time = round(time.time() - start_time, 2)
-    area_sum = df["Area (mm²)"].sum()
-    perimeter_sum = df["Perimeter (mm)"].sum()
-    update_metrics(process_time, area_sum, perimeter_sum)
+@app.get("/results", response_class=HTMLResponse)
+def results(request: Request, csv_url: str, image_url: str, svg_url: str):
+    csv_path = csv_url.lstrip("/")
+    if not os.path.exists(csv_path):
+        return HTMLResponse("<h2>❌ CSV file not found.</h2>")
+
+    df = pd.read_csv(csv_path)
 
     return templates.TemplateResponse("results.html", {
         "request": request,
-        "csv_url": f"/{csv_path}",
-        "image_url": f"/{img_path}",
-        "svg_url": f"/{svg_path}",
+        "csv_url": csv_url,
+        "image_url": image_url,
+        "svg_url": svg_url,
         "csv_table": df.to_html(classes="table", index=False, border=1)
     })
 
